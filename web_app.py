@@ -165,6 +165,54 @@ async def speak(request: Request):
         return {"error": str(e)}
 
 
+# ── Whisper STT ───────────────────────────────────────────────────────────────
+
+@app.post("/api/transcribe")
+async def transcribe(request: Request):
+    import asyncio, tempfile
+    from fastapi import UploadFile
+    content_type = request.headers.get("content-type", "")
+    if "multipart" not in content_type:
+        return {"error": "Send audio as multipart/form-data"}
+
+    form  = await request.form()
+    audio = form.get("audio")
+    if not audio:
+        return {"error": "No audio field"}
+
+    audio_bytes = await audio.read()
+    if not audio_bytes:
+        return {"error": "Empty audio"}
+
+    if openai_client is None:
+        return {"error": "OpenAI not configured"}
+
+    # Write to tmp file so Whisper can read it
+    suffix = ".webm"
+    try:
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            tmp.write(audio_bytes)
+            tmp_path = tmp.name
+
+        def call_whisper():
+            with open(tmp_path, "rb") as f:
+                return openai_client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=f,
+                    response_format="text"
+                )
+
+        text = await asyncio.to_thread(call_whisper)
+        return {"text": text.strip()}
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        try:
+            os.unlink(tmp_path)
+        except:
+            pass
+
+
 # ── WebSocket ──────────────────────────────────────────────────────────────────
 
 @app.post("/api/clear")
