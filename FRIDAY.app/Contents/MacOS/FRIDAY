@@ -1,0 +1,35 @@
+#!/bin/bash
+
+FRIDAY_DIR="$HOME/Documents/FRIDAY"
+LOG="$FRIDAY_DIR/logs/app.log"
+PORT=7771
+
+# ── Check if already running ─────────────────────────────────────────────────
+if lsof -i :$PORT -t &>/dev/null; then
+    open "http://localhost:$PORT"
+    exit 0
+fi
+
+# ── Start FRIDAY server ───────────────────────────────────────────────────────
+cd "$FRIDAY_DIR"
+mkdir -p logs
+
+# Show a native notification that FRIDAY is starting
+osascript -e 'display notification "FRIDAY is starting up..." with title "FRIDAY" subtitle "Just a moment..."'
+
+# Launch Python server in background
+nohup python3 main.py >> "$LOG" 2>&1 &
+SERVER_PID=$!
+
+# ── Wait for server to be ready (up to 20s) ──────────────────────────────────
+for i in $(seq 1 20); do
+    sleep 1
+    if curl -s -o /dev/null "http://localhost:$PORT"; then
+        break
+    fi
+done
+
+# ── Open dashboard ────────────────────────────────────────────────────────────
+open "http://localhost:$PORT"
+
+osascript -e 'display notification "Dashboard is ready!" with title "FRIDAY" subtitle "Running at localhost:7771"'

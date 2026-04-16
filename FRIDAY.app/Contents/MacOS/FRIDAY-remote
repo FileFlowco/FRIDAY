@@ -1,0 +1,28 @@
+#!/bin/bash
+# Run this on your M1 to connect to FRIDAY running on the Intel i5
+# Usage: just double-click or run ./FRIDAY-remote <intel-ip>
+
+INTEL_IP="${1:-}"
+PORT=7771
+
+if [ -z "$INTEL_IP" ]; then
+    # Try to auto-discover FRIDAY on the local network
+    echo "Scanning local network for FRIDAY..."
+    SUBNET=$(ipconfig getifaddr en0 | cut -d. -f1-3)
+    for i in $(seq 1 254); do
+        IP="$SUBNET.$i"
+        if curl -s --connect-timeout 0.3 "http://$IP:$PORT" -o /dev/null 2>/dev/null; then
+            INTEL_IP="$IP"
+            echo "Found FRIDAY at $INTEL_IP"
+            break
+        fi
+    done
+fi
+
+if [ -z "$INTEL_IP" ]; then
+    osascript -e 'display alert "FRIDAY not found" message "Make sure the Intel i5 is on, FRIDAY is running, and both Macs are on the same WiFi network." as warning'
+    exit 1
+fi
+
+open "http://$INTEL_IP:$PORT"
+osascript -e "display notification \"Connected to FRIDAY at $INTEL_IP\" with title \"FRIDAY Remote\""
