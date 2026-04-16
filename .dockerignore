@@ -1,0 +1,39 @@
+# flyctl launch added from .gitignore
+# Environment & secrets
+**/config/.env
+**/*.env
+**/.env*
+
+# Python cache
+**/__pycache__
+**/*.py[cod]
+**/*.pyo
+**/*.pyd
+**/.Python
+**/*.egg-info
+**/dist
+**/build
+**/.eggs
+
+# Virtual environments
+**/venv
+**/.venv
+**/env
+
+# Logs
+**/logs
+**/*.log
+
+# Data directories (runtime-generated)
+**/leads
+**/output
+**/data
+
+# OS
+**/.DS_Store
+**/Thumbs.db
+
+# Node
+**/node_modules
+**/npm-debug.log*
+fly.toml
